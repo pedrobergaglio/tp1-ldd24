@@ -8,6 +8,6 @@ DER
 
 https://www.figma.com/team_invite/redeem/xcmJg1WWzuhLV9tSYoQz0N
 
-MODELO RELACIONAL
+#### MODELO RELACIONAL
 
 https://www.figma.com/board/uqqN2ru6oPb4kR6EC6SkaT/Modelo-Relacional---TP1-Labo-de-Datos?node-id=0-1&t=IaSqsYdIe4Wpj9Vd-1
