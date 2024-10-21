@@ -14,10 +14,10 @@ import matplotlib as ticker
 from matplotlib import rcParams
 import seaborn as sns
 
-pais = pd.read_csv('exports/paises.csv')
-emigracion = pd.read_csv('exports/emigracion.csv')
-sedes = pd.read_csv('exports/sedes.csv')
-redes = pd.read_csv('exports/redes_sociales.csv')
+pais = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/paises.csv')
+emigracion = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/emigracion.csv')
+sedes = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/sedes.csv')
+redes = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/redes_sociales.csv')
 
 #%% i)
 # Calculamos la cantidad de sedes por region geografica usando consultas de SQL
@@ -39,25 +39,7 @@ ejercicio_i = sql^ cantidad_sedes
 
 print(ejercicio_i)
 
-# Generamos un grafico de barras para mostrar los resultados
-# CON MATPLOT VERTICAL
-fig, ax = plt.subplots()
 
-plt.rcParams['font.family'] = 'sans-serif'           
-
-
-ax.bar(data=ejercicio_i, x='Region Geografica', height='Cantidad de Sedes', color='green')
-       
-ax.set_title('Cantidad de Sedes por Region Geografica')
-ax.set_xlabel('Region Geografica', fontsize='medium')                       
-ax.set_ylabel('Cantidad de Sedes', fontsize='medium')    
-ax.set_xlim(-1, 7)
-ax.set_ylim(0, 35)
-
-ax.bar_label(ax.containers[0], fontsize=8)   # Agrega la etiqueta a cada barra
-plt.xticks(rotation=90, ha="right")
-
-# CON SEABORN HORIZONTAL
 plt.figure(figsize=(8, 5))
 # horizontal
 ax = sns.barplot(x='Cantidad de Sedes', y='Region Geografica', data=ejercicio_i, color='seagreen')
@@ -70,22 +52,21 @@ plt.show()
 
 #%% ii)
 # Calculamos para cada region geografica el promedio del flujo migratorio de los paises donde argentina tiene una delegacion
-paises_delegacion = sql^ """
-                SELECT ISO3_origen, ISO3_destino, anio, cantidad
-                FROM emigracion
-                INNER JOIN sedes
-                ON ISO3=ISO3_origen OR ISO3=ISO3_destino;
-"""
+
 
 origen = sql^ """
             SELECT ISO3_origen, COUNT(CAST(cantidad AS INTEGER)) AS emigracion
-            FROM paises_delegacion
+            FROM emigracion
+            INNER JOIN sedes
+            ON ISO3=ISO3_origen
             GROUP BY ISO3_origen;
 """
 
 destino = sql^ """
             SELECT ISO3_destino, COUNT(CAST(cantidad AS INTEGER)) AS inmigracion
-            FROM paises_delegacion
+            FROM emigracion
+            INNER JOIN sedes
+            ON ISO3=ISO3_destino
             GROUP BY ISO3_destino;
 """
 
@@ -122,3 +103,29 @@ ax.set_ylabel('Flujo Migratorio')
 
 plt.xticks(rotation=90, ha="right")
 ax.set_ylim(-10,12) #limita el rango de valores de los ejes
+
+#%% 
+#
+inmigrantes_arg = sql^ """
+                SELECT ISO3_origen AS ISO3, cantidad AS flujo_migratorio
+                FROM emigracion
+                WHERE anio='2000' AND ISO3_destino='ARG';
+"""
+
+cantidad_sedes = sql^ """
+                SELECT ISO3, COUNT(sede_id) AS cant_sedes
+                FROM sedes
+                GROUP BY ISO3;
+"""
+
+flujo_sedes = """
+            SELECT cs.ISO3, ia.flujo_migratorio, cs.cant_sedes
+            FROM inmigrantes_arg AS ia
+            INNER JOIN cantidad_sedes AS cs
+            ON cs.ISO3 = ia.ISO3;
+"""
+
+ejercicio_iii = sql^ flujo_sedes
+
+print(ejercicio_iii)
+
