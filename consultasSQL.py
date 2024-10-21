@@ -9,8 +9,8 @@ Created on Fri Oct 18 10:42:34 2024
 import pandas as pd
 from inline_sql import sql, sql_val
 
-pais = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/paises.csv')
-emigracion = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/emigracion.csv')
+paises = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/paises.csv')
+migracion = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/emigracion.csv')
 sedes = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/sedes.csv')
 redes = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/redes_sociales.csv')
 
@@ -25,14 +25,14 @@ sedes_secciones = sql^ """
 
 emigra = sql^ """
             SELECT ISO3_origen, SUM(CAST(cantidad AS INTEGER)) AS cantidad
-            FROM emigracion
+            FROM migracion
             WHERE anio='2000'
             GROUP BY ISO3_origen;
             
 """
 inmigra = sql^ """
             SELECT ISO3_destino, SUM(CAST(cantidad AS INTEGER)) AS cantidad
-            FROM emigracion
+            FROM migracion
             WHERE anio='2000'
             GROUP BY ISO3_destino;
 """
@@ -54,7 +54,7 @@ sedes_flujo = sql^ """
 paises_flujo = """
             SELECT p.nombre AS Pais, sf.sedes, sf.secciones_promedio AS 'secciones promedio', sf.neto AS 'flujo migratorio neto'
             FROM sedes_flujo AS sf
-            INNER JOIN pais AS p
+            INNER JOIN paises AS p
             ON sf.ISO3=p.ISO3;
 """
 
@@ -66,7 +66,7 @@ print(ejercicio_i)
 paises_sedes = sql^"""
                     SELECT DISTINCT s.ISO3, region_geografica
                     FROM sedes AS s
-                    INNER JOIN pais AS p
+                    INNER JOIN paises AS p
                     ON s.ISO3=p.ISO3;
 """
 
@@ -78,7 +78,7 @@ cantidad = sql^"""
 
 flujo_emigracion = sql^ """
                     SELECT cantidad, region_geografica
-                    FROM emigracion
+                    FROM migracion
                     INNER JOIN pais
                     ON ISO3_destino = ISO3
                     WHERE ISO3_origen = 'ARG';
@@ -119,7 +119,7 @@ redes_pais = sql^"""
 cantidad_redes = """
                 SELECT nombre AS Pais, cantidad AS 'Cantidad Redes'
                 FROM redes_pais AS rp
-                INNER JOIN pais AS p
+                INNER JOIN paises AS p
                 ON rp.ISO3=p.ISO3;
 """
 
@@ -138,7 +138,7 @@ redes_sedes = sql^ """
 redes_sociales = """
                 SELECT nombre AS Pais, sede_id AS Sede, plataforma AS 'Red Social', url AS URL
                 FROM redes_sedes AS r
-                INNER JOIN pais AS p
+                INNER JOIN paises AS p
                 ON r.ISO3=p.ISO3
                 ORDER BY nombre ASC, sede_id  ASC, plataforma ASC, url ASC;
 """
