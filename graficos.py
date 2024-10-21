@@ -14,12 +14,10 @@ import matplotlib as ticker
 from matplotlib import rcParams
 import seaborn as sns
 
-pais = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/paises.csv')
-emigracion = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/emigracionok.csv')
-sedes = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/sedes.csv')
-redes = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/redes_sociales.csv')
-
-emigracion.rename(columns={'año': 'anio'}, inplace=True)
+pais = pd.read_csv('exports/paises.csv')
+emigracion = pd.read_csv('exports/emigracion.csv')
+sedes = pd.read_csv('exports/sedes.csv')
+redes = pd.read_csv('exports/redes_sociales.csv')
 
 #%% i)
 # Calculamos la cantidad de sedes por region geografica usando consultas de SQL
