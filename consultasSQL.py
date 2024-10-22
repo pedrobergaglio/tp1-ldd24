@@ -9,10 +9,10 @@ Created on Fri Oct 18 10:42:34 2024
 import pandas as pd
 from inline_sql import sql, sql_val
 
-paises = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/paises.csv')
-migracion = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/emigracion.csv')
-sedes = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/sedes.csv')
-redes = pd.read_csv('/home/delfikiss/Downloads/tp1-ldd24-main/exports/redes_sociales.csv')
+paises = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/paises.csv')
+migracion = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/emigracion.csv')
+sedes = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/sedes.csv')
+redes = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/redes_sociales.csv')
 
 
 
@@ -55,7 +55,8 @@ paises_flujo = """
             SELECT p.nombre AS Pais, sf.sedes, sf.secciones_promedio AS 'secciones promedio', sf.neto AS 'flujo migratorio neto'
             FROM sedes_flujo AS sf
             INNER JOIN paises AS p
-            ON sf.ISO3=p.ISO3;
+            ON sf.ISO3=p.ISO3
+            ORDER BY sf.sedes DESC, p.nombre ASC;
 """
 
 ejercicio_i = sql^ paises_flujo
