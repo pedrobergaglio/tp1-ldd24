@@ -1,20 +1,10 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Oct 18 10:42:34 2024
-
-@author: Estudiante
-"""
-
 import pandas as pd
 from inline_sql import sql, sql_val
 
-paises = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/paises.csv')
-migracion = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/emigracion.csv')
-sedes = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/sedes.csv')
-redes = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/redes_sociales.csv')
-
-
+paises = pd.read_csv('esquemas/paises.csv')
+migracion = pd.read_csv('esquemas/migracion.csv')
+sedes = pd.read_csv('esquemas/sedes.csv')
+redes = pd.read_csv('esquemas/redes_sociales.csv')
 
 #%% i)
 sedes_secciones = sql^ """
@@ -63,6 +53,9 @@ ejercicio_i = sql^ paises_flujo
 
 print(ejercicio_i)
 
+# Exportamos el data frame a .csv en la carpeta 'consultas' 
+ejercicio_i.to_csv('consultas/consulta_i.csv', index=False)
+
 #%% ii)
 paises_sedes = sql^"""
                     SELECT DISTINCT s.ISO3, region_geografica
@@ -80,7 +73,7 @@ cantidad = sql^"""
 flujo_emigracion = sql^ """
                     SELECT cantidad, region_geografica
                     FROM migracion
-                    INNER JOIN pais
+                    INNER JOIN paises
                     ON ISO3_destino = ISO3
                     WHERE ISO3_origen = 'ARG';
 """
@@ -102,6 +95,9 @@ pais_promedio = """
 ejercicio_ii = sql^ pais_promedio
 
 print(ejercicio_ii)
+
+# Exportamos el data frame a .csv en la carpeta 'consultas' 
+ejercicio_ii.to_csv('consultas/consulta_ii.csv', index=False)
 
 #%% iii)
 sedes_redes = sql^"""
@@ -128,6 +124,9 @@ ejercicio_iii = sql^ cantidad_redes
 
 print(ejercicio_iii)
 
+# Exportamos el data frame a .csv en la carpeta 'consultas' 
+ejercicio_iii.to_csv('consultas/consulta_iii.csv', index=False)
+
 #%% iv)
 redes_sedes = sql^ """
                SELECT url, plataforma, r.sede_id, ISO3
@@ -147,3 +146,6 @@ redes_sociales = """
 ejercicio_iv = sql^ redes_sociales
 
 print(ejercicio_iv)
+
+# Exportamos el data frame a .csv en la carpeta 'consultas' 
+ejercicio_iv.to_csv('consultas/consulta_iv.csv', index=False)

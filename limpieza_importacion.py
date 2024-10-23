@@ -219,6 +219,9 @@ df_secciones_count = pd.concat([df_sedes_no_secciones, df_secciones_count])
 # Renombramos la columna pais_iso_3 a ISO3 
 df_secciones_count = df_secciones_count.rename(columns={'pais_iso_3': 'ISO3'})
 
+# Eliminamos sede_desc_castellano y tipo_seccion
+df_secciones_count = df_secciones_count.drop(columns=['sede_desc_castellano', 'tipo_seccion'])
+
 # Renombramos el dataframe
 df_sedes = df_secciones_count
 
@@ -233,7 +236,8 @@ for index, row in df_sedes[df_sedes['ISO3'].isna()].iterrows():
 df_sedes_null_iso3 = df_sedes[df_sedes['ISO3'].isna()]
 df_sedes_null_iso3.shape
 
-#%% Exportamos los dataframes a .csv en una nueva carpeta 'esquemas' 
+
+#%% Exportamos los dataframes a .csv en la carpeta 'esquemas' 
 df_sedes.to_csv('esquemas/sedes.csv', index=False)
 df_migraciones.to_csv('esquemas/migracion.csv', index=False)
 df_paises.to_csv('esquemas/paises.csv', index=False)

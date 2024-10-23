@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Oct 20 19:21:05 2024
-
-@author: delfikiss
-"""
-
 import pandas as pd
 from inline_sql import sql, sql_val
 import numpy as np
@@ -37,8 +29,6 @@ cantidad_sedes = """
 
 ejercicio_i = sql^ cantidad_sedes
 
-print(ejercicio_i)
-
 
 plt.figure(figsize=(8, 5))
 # horizontal
@@ -48,7 +38,13 @@ for index, value in enumerate(ejercicio_i['Cantidad de Sedes']):
     ax.text(value + 0.3, index, f'{value}', va='center', ha='left', color='black')
 ax.set_title('Cantidad de Sedes por Region Geografica', fontsize=14, weight='bold')
 ax.set_xticks([])
+
+# Exportamos el grafico a la carpeta 'graficos'
+plt.savefig('graficos/grafico_i.png', bbox_inches='tight')
+
+# Mostramos el grafico
 plt.show()
+
 
 #%% ii)
 # Calculamos para cada region geografica el promedio del flujo migratorio de los paises donde argentina tiene una delegacion usando pandas
@@ -100,10 +96,12 @@ lower_bound = q1 - 30 * iqr
 upper_bound = q3 + 130 * iqr
 plt.ylim(lower_bound, upper_bound)
 
+# Exportamos el grafico a la carpeta 'graficos'
+plt.savefig('graficos/grafico_ii_a.png', bbox_inches='tight')
+
 # Mostrar el gráfico
 plt.tight_layout()
 plt.show()
-
 
 
 # quitar AMERICA DEL NORTE
@@ -135,10 +133,12 @@ lower_bound = q1 - 30 * iqr
 upper_bound = q3 + 130 * iqr
 plt.ylim(lower_bound, upper_bound)
 
+# Exportamos el grafico a la carpeta 'graficos'
+plt.savefig('graficos/grafico_ii_b.png', bbox_inches='tight')
+
 # Mostrar el gráfico
 plt.tight_layout()
 plt.show()
-
 
 
 #%% 
@@ -164,8 +164,6 @@ flujo_sedes = """
 
 ejercicio_iii = sql^ flujo_sedes
 
-print(ejercicio_iii)
-
 
 # Graficamos la relación con un scatter plot
 plt.figure(figsize=(10, 6))
@@ -175,6 +173,9 @@ sns.scatterplot(x='Flujo Migratorio', y='Cantidad de Sedes', data=ejercicio_iii,
 plt.xlabel('Cantidad de Migrantes hacia Argentina (año 2000)')
 plt.ylabel('Cantidad de Sedes de Argentina en el Exterior')
 plt.title('Relación entre Migrantes y Sedes en el Exterior')
+
+# Exportamos el grafico a la carpeta 'graficos'
+plt.savefig('graficos/grafico_iii.png', bbox_inches='tight')
 
 # Mostramos el gráfico
 plt.show()
