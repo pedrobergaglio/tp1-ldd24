@@ -1,5 +1,6 @@
 import pandas as pd
 from inline_sql import sql, sql_val
+import matplotlib.pyplot as plt
 
 paises = pd.read_csv('esquemas/paises.csv')
 migracion = pd.read_csv('esquemas/migracion.csv')
@@ -49,12 +50,40 @@ paises_flujo = """
             ORDER BY sf.sedes DESC, p.nombre ASC;
 """
 
-ejercicio_i = sql^ paises_flujo
+consulta_i = sql^ paises_flujo
 
-print(ejercicio_i)
+
+# Guardamos una imagen del head del data frame para el informe
+head_i = consulta_i.head()
+
+# Creamos una figura y un eje para la tabla
+fig, ax = plt.subplots(figsize=(8, 2))  # Ajusta el tamaño de la imagen
+ax.axis('tight')
+ax.axis('off')
+
+# Ajustamos el tamaño de las columnas basado en el contenido
+# Calcular los anchos de las columnas según el contenido
+col_widths = [max(len(str(col)) for col in head_i[col_name]) * 0.1 for col_name in head_i.columns]
+
+# Dibujamos la tabla en el gráfico con los anchos de columna ajustados
+table = ax.table(cellText=head_i.values, colLabels=head_i.columns, cellLoc='center', loc='center')
+
+# Ajustamos los anchos de las columnas
+for i, width in enumerate(col_widths):
+    table.auto_set_column_width([i])  # Ajuste automático de las columnas
+    table.scale(1, 1.5)  # Ajuste el tamaño de la tabla en general
+
+# Ajustamos el ancho de filas
+table.scale(1, 0.5)  # El primer valor escala el ancho, el segundo escala la altura de las filas
+
+# Guardamos la tabla como PNG
+plt.savefig('consultas/head_consulta_i.png', bbox_inches='tight', dpi=300)
+plt.show()
+
 
 # Exportamos el data frame a .csv en la carpeta 'consultas' 
-ejercicio_i.to_csv('consultas/consulta_i.csv', index=False)
+consulta_i.to_csv('consultas/consulta_i.csv', index=False)
+
 
 #%% ii)
 paises_sedes = sql^"""
@@ -92,12 +121,40 @@ pais_promedio = """
                 ORDER BY pf.promedio DESC;
 """
 
-ejercicio_ii = sql^ pais_promedio
+consulta_ii = sql^ pais_promedio
 
-print(ejercicio_ii)
+
+# Guardamos una imagen del head del data frame para el informe
+head_ii = consulta_ii.head()
+
+# Creamos una figura y un eje para la tabla
+fig, ax = plt.subplots(figsize=(8, 2))  # Ajusta el tamaño de la imagen
+ax.axis('tight')
+ax.axis('off')
+
+# Ajustamos el tamaño de las columnas basado en el contenido
+# Calcular los anchos de las columnas según el contenido
+col_widths = [max(len(str(col)) for col in head_ii[col_name]) * 0.1 for col_name in head_ii.columns]
+
+# Dibujamos la tabla en el gráfico con los anchos de columna ajustados
+table = ax.table(cellText=head_ii.values, colLabels=head_ii.columns, cellLoc='center', loc='center')
+
+# Ajustamos los anchos de las columnas
+for i, width in enumerate(col_widths):
+    table.auto_set_column_width([i])  # Ajuste automático de las columnas
+    table.scale(1, 1.5)  # Ajuste el tamaño de la tabla en general
+    
+# Ajustamos el ancho de filas
+table.scale(1, 0.5)  # El primer valor escala el ancho, el segundo escala la altura de las filas
+
+# Guardamos la tabla como PNG
+plt.savefig('consultas/head_consulta_ii.png', bbox_inches='tight', dpi=300)
+plt.show()
+
 
 # Exportamos el data frame a .csv en la carpeta 'consultas' 
-ejercicio_ii.to_csv('consultas/consulta_ii.csv', index=False)
+consulta_ii.to_csv('consultas/consulta_ii.csv', index=False)
+
 
 #%% iii)
 sedes_redes = sql^"""
@@ -117,15 +174,43 @@ cantidad_redes = """
                 SELECT nombre AS Pais, cantidad AS 'Cantidad Redes'
                 FROM redes_pais AS rp
                 INNER JOIN paises AS p
-                ON rp.ISO3=p.ISO3;
+                ON rp.ISO3=p.ISO3
+                ORDER BY cantidad DESC;
 """
 
-ejercicio_iii = sql^ cantidad_redes
+consulta_iii = sql^ cantidad_redes
 
-print(ejercicio_iii)
+
+# Guardamos una imagen del head del data frame para el informe
+head_iii = consulta_iii.head()
+
+# Creamos una figura y un eje para la tabla
+fig, ax = plt.subplots(figsize=(8, 2))  # Ajusta el tamaño de la imagen
+ax.axis('tight')
+ax.axis('off')
+
+# Ajustamos el tamaño de las columnas basado en el contenido
+# Calcular los anchos de las columnas según el contenido
+col_widths = [max(len(str(col)) for col in head_iii[col_name]) * 0.1 for col_name in head_iii.columns]
+
+# Dibujamos la tabla en el gráfico con los anchos de columna ajustados
+table = ax.table(cellText=head_iii.values, colLabels=head_iii.columns, cellLoc='center', loc='center')
+
+# Ajustamos los anchos de las columnas
+for i, width in enumerate(col_widths):
+    table.auto_set_column_width([i])  # Ajuste automático de las columnas
+    table.scale(1, 1.5)  # Ajuste el tamaño de la tabla en general
+
+# Ajustamos el ancho de filas
+table.scale(1, 0.75)  # El primer valor escala el ancho, el segundo escala la altura de las filas
+
+# Guardamos la tabla como PNG
+plt.savefig('consultas/head_consulta_iii.png', bbox_inches='tight', dpi=300)
+plt.show()
+
 
 # Exportamos el data frame a .csv en la carpeta 'consultas' 
-ejercicio_iii.to_csv('consultas/consulta_iii.csv', index=False)
+consulta_iii.to_csv('consultas/consulta_iii.csv', index=False)
 
 #%% iv)
 redes_sedes = sql^ """
@@ -143,9 +228,36 @@ redes_sociales = """
                 ORDER BY nombre ASC, sede_id  ASC, plataforma ASC, url ASC;
 """
 
-ejercicio_iv = sql^ redes_sociales
+consulta_iv = sql^ redes_sociales
 
-print(ejercicio_iv)
+
+# Guardamos una imagen del head del data frame para el informe
+head_iv = consulta_iv.head()
+
+# Creamos una figura y un eje para la tabla
+fig, ax = plt.subplots(figsize=(8, 2))  # Ajusta el tamaño de la imagen
+ax.axis('tight')
+ax.axis('off')
+
+# Ajustamos el tamaño de las columnas basado en el contenido
+# Calcular los anchos de las columnas según el contenido
+col_widths = [max(len(str(col)) for col in head_iv[col_name]) * 0.1 for col_name in head_iv.columns]
+
+# Dibujamos la tabla en el gráfico con los anchos de columna ajustados
+table = ax.table(cellText=head_iv.values, colLabels=head_iv.columns, cellLoc='center', loc='center')
+
+# Ajustamos los anchos de las columnas
+for i, width in enumerate(col_widths):
+    table.auto_set_column_width([i])  # Ajuste automático de las columnas
+    table.scale(1, 1.5)  # Ajuste el tamaño de la tabla en general
+
+# Ajustamos el ancho de filas
+table.scale(1, 0.5)  # El primer valor escala el ancho, el segundo escala la altura de las filas
+
+# Guardamos la tabla como PNG
+plt.savefig('consultas/head_consulta_iv.png', bbox_inches='tight', dpi=300)
+plt.show()
+
 
 # Exportamos el data frame a .csv en la carpeta 'consultas' 
-ejercicio_iv.to_csv('consultas/consulta_iv.csv', index=False)
+consulta_iv.to_csv('consultas/consulta_iv.csv', index=False)
