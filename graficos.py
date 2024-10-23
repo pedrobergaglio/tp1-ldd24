@@ -1,3 +1,6 @@
+# Integrantes: Bergaglio Pedro, Da Silva Minas Tomas y Kiss Maria Delfina
+# En este archivo realizamos los graficos que utilizamos a lo largo del trabajo
+
 import pandas as pd
 from inline_sql import sql, sql_val
 import numpy as np
@@ -6,10 +9,10 @@ import matplotlib as ticker
 from matplotlib import rcParams
 import seaborn as sns
 
-paises = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/paises.csv')
-migracion = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/emigracion.csv')
-sedes = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/sedes.csv')
-redes = pd.read_csv('/home/delfikiss/Desktop/Laboratorio de Datos/TP1/tp1-ldd24-main/exports/redes_sociales.csv')
+paises = pd.read_csv('esquemas/paises.csv')
+migracion = pd.read_csv('esquemas/migracion.csv')
+sedes = pd.read_csv('esquemas/sedes.csv')
+redes = pd.read_csv('esquemas/redes_sociales.csv')
 
 #%% i)
 # Calculamos la cantidad de sedes por region geografica usando consultas de SQL
@@ -74,7 +77,7 @@ medianas = flujo_paises_region.groupby('region_geografica')['flujo_migratorio'].
 
 
 # Crear la figura
-plt.figure(figsize=(10, 20))
+plt.figure(figsize=(10, 9))
 
 # Graficar el boxplot, ordenado por la mediana de cada región
 sns.boxplot(x='region_geografica', y='flujo_migratorio', data=flujo_paises_region, 
@@ -111,7 +114,7 @@ flujo_paises_region = flujo_paises_region[flujo_paises_region['region_geografica
 medianas = flujo_paises_region.groupby('region_geografica')['flujo_migratorio'].median().sort_values(ascending=False)
 
 # Crear la figura
-plt.figure(figsize=(10, 20))
+plt.figure(figsize=(10, 7))
 
 # Graficar el boxplot, ordenado por la mediana de cada región
 sns.boxplot(x='region_geografica', y='flujo_migratorio', data=flujo_paises_region, 
@@ -130,7 +133,7 @@ q1 = flujo_paises_region['flujo_migratorio'].quantile(0.25)
 q3 = flujo_paises_region['flujo_migratorio'].quantile(0.75)
 iqr = q3 - q1
 lower_bound = q1 - 30 * iqr
-upper_bound = q3 + 130 * iqr
+upper_bound = q3 + 20 * iqr
 plt.ylim(lower_bound, upper_bound)
 
 # Exportamos el grafico a la carpeta 'graficos'
@@ -174,8 +177,104 @@ plt.xlabel('Cantidad de Migrantes hacia Argentina (año 2000)')
 plt.ylabel('Cantidad de Sedes de Argentina en el Exterior')
 plt.title('Relación entre Migrantes y Sedes en el Exterior')
 
+# Ponemos los indices en el eje x
+plt.xticks(ticks=[0, 50000, 100000, 150000, 200000, 250000])
+
+# Mostrar la grilla
+plt.grid(True)
+
 # Exportamos el grafico a la carpeta 'graficos'
 plt.savefig('graficos/grafico_iii.png', bbox_inches='tight')
 
 # Mostramos el gráfico
 plt.show()
+
+
+#%% GRAFICOS EXTRA PARA LA CONCLUSION
+
+# Realizamos una consulta de SQL para obtener los flujo migratorio de Argentina hacia los distintos paises en el año 2000 y cuantas sedes argentinas tiene ese pais
+inmigrantes_arg = sql^ """
+                SELECT ISO3_destino AS ISO3, cantidad AS flujo_migratorio
+                FROM migracion
+                WHERE anio='2000' AND ISO3_origen='ARG';
+"""
+
+cantidad_sedes = sql^ """
+                SELECT ISO3, COUNT(sede_id) AS cant_sedes
+                FROM sedes
+                GROUP BY ISO3;
+"""
+
+flujo_sedes = sql^ """
+            SELECT cs.ISO3, ia.flujo_migratorio, cs.cant_sedes
+            FROM inmigrantes_arg AS ia
+            INNER JOIN cantidad_sedes AS cs
+            ON cs.ISO3 = ia.ISO3;
+"""
+
+pais_flujo_sedes = """
+                SELECT p.nombre, p.ISO3, fs.flujo_migratorio AS 'Flujo Migratorio', fs.cant_sedes AS 'Cantidad de Sedes'
+                FROM flujo_sedes AS fs
+                INNER JOIN paises AS p
+                ON fs.ISO3=p.ISO3;
+"""
+
+grafico_extra = sql^ pais_flujo_sedes
+
+# GRAFICO 1
+# Graficamos la relación con un scatter plot
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Flujo Migratorio', y='Cantidad de Sedes', data=grafico_extra, color='blue')
+
+# Agregamos etiquetas a los puntos (ISO3 de cada país)
+for flujo, cantidad, iso in zip(grafico_extra['Flujo Migratorio'], grafico_extra['Cantidad de Sedes'], grafico_extra['ISO3']):
+    plt.annotate(iso, (flujo, cantidad), textcoords="offset points", xytext=(5,5), ha='center', fontsize=8)
+
+# Etiquetas y título
+plt.xlabel('Cantidad de Migrantes hacia Argentina (año 2000)')
+plt.ylabel('Cantidad de Sedes de Argentina en el Exterior')
+plt.title('Relación entre Migrantes y Sedes en el Exterior')
+
+# Mostrar la grilla
+plt.grid(True)
+
+# Ponemos los indices en el eje x
+plt.xticks(ticks=[0, 20000, 40000, 60000, 80000, 100000, 120000, 140000])
+
+# Exportamos el gráfico a la carpeta 'graficos'
+plt.savefig('graficos/grafico_extra1.png', bbox_inches='tight')
+
+# Mostramos el gráfico
+plt.show()
+
+
+
+# GRAFICO 2
+# Configuramos la figura
+plt.figure(figsize=(12, 15))
+
+# Graficar la relación, usando un gradiente de colores según la cantidad de sedes
+scatter = sns.scatterplot(x='Flujo Migratorio', y='nombre', hue='Cantidad de Sedes', size='Cantidad de Sedes', 
+                          sizes=(50, 500), data=grafico_extra, palette='coolwarm', legend='brief')
+
+# Etiquetas y título
+plt.xlabel('Cantidad de Migrantes desde Argentina (año 2000)')
+plt.ylabel('País de Destino')
+plt.title('Relación entre Migrantes desde Argentina y Sedes en el Exterior')
+
+# Mostrar leyenda para el gradiente de color
+plt.legend(title='Cantidad de Sedes', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+# Mostrar la grilla
+plt.grid(True)
+
+# Ponemos los indices en el eje x
+plt.xticks(ticks=[0, 20000, 40000, 60000, 80000, 100000, 120000, 140000])
+
+# Exportamos el gráfico
+plt.savefig('graficos/grafico_extra2.png', bbox_inches='tight')
+
+# Mostramos el gráfico
+plt.tight_layout()
+plt.show()
+

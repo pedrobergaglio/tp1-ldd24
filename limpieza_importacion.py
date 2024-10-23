@@ -1,3 +1,6 @@
+# Integrantes: Bergaglio Pedro, Da Silva Minas Tomas y Kiss Maria Delfina
+# En este archivo realizamos algunas cuentas que utilizacmos para el calculo de la metrica GQM, limpiamos los datos y lso importamos a nuestros esquemas
+
 # Importamos librerias y leemos los archivos csv
 import pandas as pd
 
@@ -110,6 +113,8 @@ print("Cantidad de valores distintos en la columna 'pais_castellano':", df_sedes
 # Creamos un df a partir de df_sedes_datos que contenga unicamente los valores de la columna 'pais_castellano' que no son nulos, y no son 'Argentinos en el exterior', y únicos, con el nombre de la columna 'pais'
 df_paises = df_sedes_datos[df_sedes_datos['pais_castellano'].notna() & df_sedes_datos['region_geografica'].notna() & 
                      (df_sedes_datos['pais_castellano'] != 'Argentinos  en  el  exterior')][['pais_iso_3', 'pais_castellano', 'region_geografica']].drop_duplicates()
+# Pnemos todos los nombres de los paises en mayusculas para mejor lectura, visualizacion y comodidad
+df_paises['pais_castellano'] = df_paises['pais_castellano'].str.upper()
 # Renombramos las columnas
 df_paises.columns = ['ISO3', 'nombre', 'region_geografica']
 
