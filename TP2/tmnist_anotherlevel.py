@@ -20,21 +20,63 @@ tmnist = pd.read_csv('TMNIST_Data.csv')
 #%% Exploracion de datos
 print(tmnist.head())
 print(tmnist.info())
-print(tmnist.shape)
-
-print(tmnist.dtypes)
-# Convertimos las columnas de píxeles a tipo float, ignorando posibles errores
-tmnist.iloc[:, 1:] = tmnist.iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
-
-print(tmnist['labels'].value_counts())
+print('filas y columnas: ', tmnist.shape)
+print('tipos de datos: ', tmnist.dtypes)
+print('cantidad de digitos: ', tmnist['labels'].value_counts())
 print(tmnist.describe())
-sns.countplot(x='labels', data=tmnist)
 
 
+# Iterate over the DataFrame rows
+for index, row in tmnist.iterrows():
+    # The first column is the name
+    nombre = row[0]
+    label = row[1]
 
-img_data = tmnist.iloc[1, 2:].values  # Saltar la columna de etiqueta
+    # The rest of columns are pixels
+    pixels = row[2:].values
 
-# Convertir a una matriz de 28x28 y graficar
-img = img_data.reshape((28, 28))
-plt.imshow(img, cmap='gray')
-plt.show()
+    # Make those columns into a array of 8-bits pixels
+    # This array will be of 1D with length 784
+    # The pixel intensity values are integers from 0 to 255
+    pixels = np.array(pixels, dtype='uint8')
+
+    # Reshape the array into 28 x 28 array (2-dimensional array)
+    pixels = pixels.reshape((28, 28))
+
+    # Plot
+    plt.title('{nombre}:{label}'.format(nombre=nombre, label=label))
+    plt.imshow(pixels, cmap='gray_r')  # Use 'gray_r' to invert the colors
+    plt.show()
+
+    break # Solo vemos la primer imagen
+
+digito0 = tmnist[tmnist['labels'] == 0]
+
+# Iterate over the DataFrame rows
+k = 0
+for index, row in digito0.iterrows():
+    # The first column is the name
+    nombre = row[0]
+    label = row[1]
+
+    # The rest of columns are pixels
+    pixels = row[2:].values
+
+    # Make those columns into a array of 8-bits pixels
+    # This array will be of 1D with length 784
+    # The pixel intensity values are integers from 0 to 255
+    pixels = np.array(pixels, dtype='uint8')
+
+    # Reshape the array into 28 x 28 array (2-dimensional array)
+    pixels = pixels.reshape((28, 28))
+
+    # Plot
+    plt.title('{nombre}:{label}'.format(nombre=nombre, label=label))
+    plt.imshow(pixels, cmap='gray_r')  # Use 'gray_r' to invert the colors
+    plt.show()
+    
+    k+=1
+    
+    if k == 6:
+        break # Solo vemos la primer imagen
+
