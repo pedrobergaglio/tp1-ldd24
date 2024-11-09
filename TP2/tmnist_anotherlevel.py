@@ -451,3 +451,35 @@ for k in k_values:
 print(f'Mejor modelo - k: {best_k}, Atributos: {best_attributes}, Exactitud: {best_accuracy}')
 print(f'Precisión: {precision}')
 print(f'Matriz de confusión:\n{cm}')
+
+#%% Graficamos
+# Calcular la exactitud promedio para cada k
+accuracy_by_k = defaultdict(list)
+
+for k, attributes, accuracy in results:
+    accuracy_by_k[k].append((attributes, accuracy))
+
+average_accuracy_by_k_attributes = {}
+
+for k, attributes_accuracies in accuracy_by_k.items():
+    for attributes, accuracies in attributes_accuracies:
+        average_accuracy_by_k_attributes[f'{k}, {len(attributes)} attributes'] = np.mean(accuracies)
+
+for k_attributes, avg_accuracy in average_accuracy_by_k_attributes.items():
+    print(f'{k_attributes}: {avg_accuracy}')    
+    
+# Graficamos
+# Extraer los valores de k, cantidad de atributos y exactitud promedio
+k_values = [int(key.split(',')[0]) for key in average_accuracy_by_k_attributes.keys()]
+num_attributes = [int(key.split(',')[1].split(' ')[1]) for key in average_accuracy_by_k_attributes.keys()]
+accuracies = list(average_accuracy_by_k_attributes.values())
+
+# Crear un scatter plot
+scatter = plt.scatter(k_values, accuracies, c=num_attributes, cmap='viridis')
+plt.xlabel('Cantidad de vecinos')
+plt.ylabel('Exactitud promedio')
+# Agregar la barra de color
+cbar = plt.colorbar(scatter)
+cbar.set_label('Cantidad de Atributos')
+plt.show()
+    
