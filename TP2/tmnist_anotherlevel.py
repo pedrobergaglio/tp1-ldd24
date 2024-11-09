@@ -10,176 +10,182 @@ import matplotlib.pyplot as plt
 from inline_sql import sql
 
 #%% Carga de Datos 
-tmnist = pd.read_csv('/home/Estudiante/Descargas/TMNIST_Data.csv')
+# Leemos el archivo csv en un dataframe
+df = pd.read_csv('TMNIST_Data.csv')
+
+# Sacamos el atributo 'names'
+df = df.drop('names', axis=1)
 
 #%% Funciones
+
+def imagen(df, digito):
+    # Filtrar el DataFrame para obtener solo las filas que corresponden al dígito especificado
+    imagenes_digito = df[df['labels'] == digito]
+    
+    # Seleccionar una imagen aleatoria del subconjunto filtrado
+    imagen_seleccionada = imagenes_digito.sample(n=1).iloc[0, 1:].values
+    
+    # Convertir los valores de la imagen a un array de 8 bits y reformatear a 28x28
+    pixels = np.array(imagen_seleccionada, dtype='uint8').reshape((28, 28))
+    
+    # Graficar la imagen
+    plt.title(f'Dígito {digito}')
+    plt.imshow(pixels, cmap='gray_r')  # Use 'gray_r' to invert the colors
+    plt.show()
+    
+def mapacalornumeros(df):
+    # Sumamos todas las filas para cada píxel
+    pixel_sums = df.drop('labels', axis=1).sum(axis=0).values
+
+    # Normalizamos las sumas de los píxeles
+    pixel_sums_normalized = pixel_sums / pixel_sums.max()
+
+    # Redimensionamos las sumas normalizadas de los píxeles en un array de 28x28
+    heatmap_data = pixel_sums_normalized.reshape((28, 28))
+
+    # Graficamos el mapa de calor
+    plt.imshow(heatmap_data, cmap='hot', interpolation='nearest')
+    plt.colorbar()
+    plt.savefig("figura1.png", dpi=300, bbox_inches='tight')
+    plt.show()
+
 
 
 #%% Codigo 
 
-
 #%% Exploracion de datos
-print(tmnist.head())
-print(tmnist.info())
-print('filas y columnas: ', tmnist.shape)
-print('tipos de datos: ', tmnist.dtypes)
-print('cantidad de digitos: ', tmnist['labels'].value_counts())
-print(tmnist.describe())
+print(df.head())
+print(df.info())
+print('filas y columnas: ', df.shape)
+print('tipos de datos: ', df.dtypes)
+print('cantidad de digitos: ', df['labels'].value_counts())
+print(df.describe())
 
 
-# Iterate over the DataFrame rows
-for index, row in tmnist.iterrows():
-    # The first column is the name
-    nombre = row[0]
-    label = row[1]
+#%% Sacar pixeles que suman cero
 
-    # The rest of columns are pixels
-    pixels = row[2:].values
+df_completo = df.copy()
 
-    # Make those columns into a array of 8-bits pixels
-    # This array will be of 1D with length 784
-    # The pixel intensity values are integers from 0 to 255
-    pixels = np.array(pixels, dtype='uint8')
+pixel_sums = df.drop('labels', axis=1).sum(axis=0).values
 
-    # Reshape the array into 28 x 28 array (2-dimensional array)
-    pixels = pixels.reshape((28, 28))
+#Cantidad de pixeles que suman 0
+zero_sum_pixels = np.sum(pixel_sums == 0)
+print(f'Cantidad de píxeles que sumaron 0: {zero_sum_pixels}')
 
-    # Plot
-    plt.title('{nombre}:{label}'.format(nombre=nombre, label=label))
-    plt.imshow(pixels, cmap='gray_r')  # Use 'gray_r' to invert the colors
-    plt.show()
+df_labels = df['labels']
 
-    break # Solo vemos la primer imagen
-#%%
-#digito 1
-digito0 = tmnist[tmnist['labels'] == 1]
+# columnas que no sumaron 0
+non_zero_sum_pixels = np.sum(pixel_sums != 0)
+print(f'Cantidad de píxeles que no sumaron 0: {non_zero_sum_pixels}')
 
-# Iterate over the DataFrame rows
-k = 0
-for index, row in digito0.iterrows():
-    # The first column is the name
-    nombre = row[0]
-    label = row[1]
+#columnas que sumaron 0
+cols_zero_sum = np.where(pixel_sums == 0)[0]
+print(f'Columnas que sumaron 0: {cols_zero_sum.shape}')
 
-    # The rest of columns are pixels
-    pixels = row[2:].values
+# sacar columnas que sumaron 0
+df = df.drop(df.columns[cols_zero_sum], axis=1)
+print(f'Cantidad de columnas restantes: {df.shape[1]}')
 
-    # Make those columns into a array of 8-bits pixels
-    # This array will be of 1D with length 784
-    # The pixel intensity values are integers from 0 to 255
-    pixels = np.array(pixels, dtype='uint8')
+df['labels'] = df_labels
+# poner labels al principio
+df = df[['labels'] + [col for col in df.columns if col != 'labels']]
 
-    # Reshape the array into 28 x 28 array (2-dimensional array)
-    pixels = pixels.reshape((28, 28))
+df.head()
 
-    # Plot
-    plt.title('{nombre}:{label}'.format(nombre=nombre, label=label))
-    plt.imshow(pixels, cmap='gray_r')  # Use 'gray_r' to invert the colors
-    plt.show()
+#%% Heatmap de presencia de pixeles
+mapacalornumeros(df_completo)
+
+
+#%% Imagenes digitos 1, 3 y 8 
+imagen(df_completo, 1)
+imagen(df_completo, 3)
+imagen(df_completo, 8)
+
+# Calculamos los valores promedio de los píxeles para cada etiqueta
+promedios_labels = df_completo.groupby('labels').mean()
+
+# Creamos una lista vacía para almacenar las diferencias de píxeles
+pixel_diffs = []
+
+recorridas = []
+
+# Iteramos sobre todos los pares de etiquetas
+for label1 in promedios_labels.index:
+    for label2 in promedios_labels.index:
+        # Nos aseguramos de no comparar una etiqueta consigo misma ni repetir comparaciones
+        if label1 != label2 and (label2, label1) not in recorridas and (label1, label2) not in recorridas:
+            # Calculamos la diferencia absoluta entre los valores promedio de los píxeles
+            pixel_diff = (np.abs(promedios_labels.loc[label1] - promedios_labels.loc[label2])).mean()
+
+            # Agregamos las diferencias de píxeles a la lista
+            pixel_diffs.append((label1, label2, pixel_diff))
+
+            # Registramos el par de etiquetas como ya comparado
+            recorridas.append((label1, label2))
+
+# Top 5 pares de labels con mayor diferencia promedio
+top_5_differences = sorted(pixel_diffs, key=lambda x: x[2], reverse=True)[:5]
+
+# Top 5 pares de labels con menor diferencia promedio
+bottom_5_differences = sorted(pixel_diffs, key=lambda x: x[2])[:5]
+
+print('Top 5 pares de labels con mayor diferencia promedio:')
+for label1, label2, diff in top_5_differences:
+    print(f'Labels {label1} y {label2}: {diff}')
+
+print('\nTop 5 pares de labels con menor diferencia promedio:')
+for label1, label2, diff in bottom_5_differences:
+    print(f'Labels {label1} y {label2}: {diff}')
     
-    k+=1
-    
-    if k == 6:
-        break # Solo vemos la primer imagen
-        
-#%%
-#digito 3        
-        
-digito0 = tmnist[tmnist['labels'] == 3]
+# Calculamos la diferencia absoluta entre el promedio de los pixeles de los labels 1 y 3
+pixel_diff_1_3 = np.abs(promedios_labels.loc[1] - promedios_labels.loc[3])
 
-# Iterate over the DataFrame rows
-k = 0
-for index, row in digito0.iterrows():
-    # The first column is the name
-    nombre = row[0]
-    label = row[1]
+# Normalizamos
+pixel_diff_normalized_1_3 = pixel_diff_1_3 / pixel_diff_1_3.max()
 
-    # The rest of columns are pixels
-    pixels = row[2:].values
+# Hacemos reshape
+heatmap_data_1_3 = pixel_diff_normalized_1_3.values.reshape((28, 28))
 
-    # Make those columns into a array of 8-bits pixels
-    # This array will be of 1D with length 784digito0 = tmnist[tmnist['labels'] == 3]
+# Graficamos el heatmap
+plt.imshow(heatmap_data_1_3, cmap='hot', interpolation='nearest')
+plt.colorbar()
+plt.show()
 
-    # Iterate over the DataFrame rows
-    k = 0
-    for index, row in digito0.iterrows():
-        # The first column is the name
-        nombre = row[0]
-        label = row[1]
+# Calculamos la diferencia absoluta entre el promedio de los pixeles de los labels 3 y 8
+pixel_diff_3_8 = np.abs(promedios_labels.loc[3] - promedios_labels.loc[8])
 
-        # The rest of columns are pixels
-        pixels = row[2:].values
+# Normalizamos
+pixel_diff_normalized_3_8 = pixel_diff_3_8 / pixel_diff_3_8.max()
 
-        # Make those columns into a array of 8-bits pixels
-        # This array will be of 1D with length 784
-        # The pixel intensity values are integers from 0 to 255
-        pixels = np.array(pixels, dtype='uint8')
+# Hacemos reshape
+heatmap_data_3_8 = pixel_diff_normalized_3_8.values.reshape((28, 28))
 
-        # Reshape the array into 28 x 28 array (2-dimensional array)
-        pixels = pixels.reshape((28, 28))
+# Graficamos el heatmap
+plt.imshow(heatmap_data_3_8, cmap='hot', interpolation='nearest')
+plt.colorbar()
+plt.show()
 
-        # Plot
-        plt.title('{nombre}:{label}'.format(nombre=nombre, label=label))
-        plt.imshow(pixels, cmap='gray_r')  # Use 'gray_r' to invert the colors
-        plt.show()
-        
-        k+=1
-        
-        if k == 6:
-            break # Solo vemos la primer imagen
-    # The pixel intensity values are integers from 0 to 255
-    pixels = np.array(pixels, dtype='uint8')
+#%% Mapa de calor digito 1 con 3 y 3 con 8
+# Nos quedamos con los digitos 1 y 3
+df_1_3 = df_completo[(df_completo['labels'] == 1) | (df_completo['labels'] == 3)]
 
-    # Reshape the array into 28 x 28 array (2-dimensional array)
-    pixels = pixels.reshape((28, 28))
+mapacalornumeros(df_1_3)
 
-    # Plot
-    plt.title('{nombre}:{label}'.format(nombre=nombre, label=label))
-    plt.imshow(pixels, cmap='gray_r')  # Use 'gray_r' to invert the colors
-    plt.show()
-    
-    k+=1
-    
-    if k == 6:
-        break # Solo vemos la primer imagen
-        
-#%%
+# Nos quedamos con los digitos 3 y 8
+df_3_8 = df_completo[(df_completo['labels'] == 3) | (df_completo['labels'] == 8)]
 
-# Digito 8
-digito0 = tmnist[tmnist['labels'] == 8]
+mapacalornumeros(df_3_8)
 
-# Iterate over the DataFrame rows
-k = 0
-for index, row in digito0.iterrows():
-    # The first column is the name
-    nombre = row[0]
-    label = row[1]
 
-    # The rest of columns are pixels
-    pixels = row[2:].values
+#%% Digito 0 
+for i in range(1, 5, 1):
+    imagen(df_completo, 0)
 
-    # Make those columns into a array of 8-bits pixels
-    # This array will be of 1D with length 784
-    # The pixel intensity values are integers from 0 to 255
-    pixels = np.array(pixels, dtype='uint8')
+# Mapa de calor 
+# Nos quedamos el digito 0
+df_0 = df_completo[(df_completo['labels'] == 0)]
 
-    # Reshape the array into 28 x 28 array (2-dimensional array)
-    pixels = pixels.reshape((28, 28))
+mapacalornumeros(df_0)
 
-    # Plot
-    plt.title('{nombre}:{label}'.format(nombre=nombre, label=label))
-    plt.imshow(pixels, cmap='gray_r')  # Use 'gray_r' to invert the colors
-    plt.show()
-    
-    k+=1
-    
-    if k == 6:
-        break # Solo vemos la primer imagen
-        
-#%%
 
-digitos_1_y_0= sql^"""
-SELECT *
-FROM tmnist
-WHERE labels=0 OR labels=1
-"""
+#%% 
