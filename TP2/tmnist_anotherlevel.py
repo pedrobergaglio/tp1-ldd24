@@ -743,8 +743,27 @@ for i in range(10):
 
 #%% Graficamos la matriz de confusion en un heatmap
 
-plt.imshow(cm, cmap='hot', interpolation='nearest')
+# Nos aseguramos de que cm sea un numpy array
+cm = np.array(cm)
+
+# Creamos el heatmap
+plt.figure(figsize=(8, 6))
+plt.imshow(cm, interpolation='nearest', cmap='Reds')
 plt.colorbar()
+
+# Etiquetas en los ejes
 plt.xlabel('Predicciones')
 plt.ylabel('Valores reales')
+
+# Valores en cada celda
+for i in range(cm.shape[0]):
+    for j in range(cm.shape[1]):
+        # Mejor visualizacion
+        color = 'white' if cm[i, j] > cm.max() / 2 else 'black'
+        plt.text(j, i, format(cm[i, j], 'd'), ha='center', va='center', color=color)
+plt.xticks(np.arange(cm.shape[1]))
+plt.yticks(np.arange(cm.shape[0]))
+
+# Mejorar el grafico
+plt.tight_layout()
 plt.show()
