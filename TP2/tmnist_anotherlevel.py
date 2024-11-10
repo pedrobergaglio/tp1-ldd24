@@ -10,9 +10,11 @@ import matplotlib.pyplot as plt
 from inline_sql import sql
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score
 from collections import defaultdict
 from sklearn.metrics import confusion_matrix
+from sklearn import metrics
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import KFold
 
 #%% Carga de Datos 
 # Leemos el archivo csv en un dataframe
@@ -57,8 +59,8 @@ def mapacalornumeros(df):
 
 
 #%% Codigo 
-
-#%% Exploracion de datos
+#%% ANALISIS EXPLORATORIO
+# Exploracion de datos
 print(df.head())
 print(df.info())
 print('filas y columnas: ', df.shape)
@@ -213,7 +215,8 @@ df_0 = df_completo[(df_completo['labels'] == 0)]
 mapacalornumeros(df_0)
 
 
-#%% Dataframe digitos 0 y 1 y exploracion
+#%% CLASIFICACION BINARIA
+# Dataframe digitos 0 y 1 y exploracion
 # Dataframe con imágenes correspondientes a los dígitos 0 o 1
 df_0_1 = df[(df['labels'] == 0) | (df['labels'] == 1)]
 
@@ -225,7 +228,7 @@ print(f'Cantidad de muestras del dígito 1: {count_1}')
 
 
 #%% Separamos los datos en conjuntos de train y de test
-X_0_1 = df_0_1.drop('labels', axis=1).values
+X_0_1 = df_0_1.drop('labels', axis=1)
 y_0_1 = df_0_1['labels'].values
 X_train, X_test, y_train, y_test = train_test_split(X_0_1, y_0_1, test_size=0.2, random_state=42)
 
@@ -263,17 +266,27 @@ image_matrix[middle] = 256
 plt.imshow(image_matrix, cmap='gray_r', vmin=0, vmax=256)
 
 
-X_mano = df_0_1[atributo_elegido_mano].values
-y_mano = df_0_1['labels'].values
 
-X_train_mano, X_test_mano, y_train_mano, y_test_mano = train_test_split(X_mano, y_mano, test_size=0.2, random_state=42)
+X_train = pd.DataFrame(X_train)
+X_test = pd.DataFrame(X_test)
 
-knn_mano = KNeighborsClassifier(n_neighbors=3)
-knn_mano.fit(X_train_mano, y_train_mano)
-y_pred_mano = knn_mano.predict(X_test_mano)
+mano = []
+for i in range(3):
+    mano.append(str(atributo_elegido_mano[i]))
+    
+X_train_mano = X_train.loc[:,mano]
+X_test_mano = X_test.loc[:,mano]
 
-accuracy_mano = accuracy_score(y_test_mano, y_pred_mano)
-print(f'Exactitud con 3 los atributos elegidos a mano: {accuracy_mano}')
+model_mano = KNeighborsClassifier(n_neighbors = 3) 
+
+model_mano.fit(X_train_mano, y_train) # entreno el modelo con los datos X_train e Y_train
+
+y_pred_mano = model_mano.predict(X_test_mano) # me fijo qué clases les asigna el modelo a mis datos X_test
+
+accuracy_mano = metrics.accuracy_score(y_test, y_pred_mano)
+
+print("Exactitud con 3 los atributos elegidos a mano:", accuracy_mano)
+
 
 
 #%% 3 atributos con mayor diferencia absoluta
@@ -290,14 +303,15 @@ diff = np.abs(mean_1 - mean_0)
 
 # Calcular los 3 pixeles con mayor diferencia
 diff_sorted = diff.sort_values(ascending=False)
-atributo_elegido = diff_sorted.index[:3].values
+atributo_elegido_dif = diff_sorted.index[:3].values
+
 
 
 # Crear una matriz de 28x28 inicializada en cero
 image_matrix = np.zeros((28, 28))
 
 # Asignar intensidad 256 a los píxeles seleccionados
-for atributo in atributo_elegido:
+for atributo in atributo_elegido_dif:
     # Convertir el índice del atributo a su posición en la matriz 28x28
     row = int(atributo) // 28
     col = int(atributo) % 28
@@ -307,30 +321,44 @@ for atributo in atributo_elegido:
 plt.imshow(image_matrix, cmap='gray_r', vmin=0, vmax=256)
 
 
-X_dif = df_0_1[atributo_elegido].values
-y_dif = df_0_1['labels'].values
 
-X_train_dif, X_test_dif, y_train_dif, y_test_dif = train_test_split(X_dif, y_dif, test_size=0.2, random_state=42)
+X_train = pd.DataFrame(X_train)
+X_test = pd.DataFrame(X_test)
 
-knn_dif = KNeighborsClassifier(n_neighbors=3)
-knn_dif.fit(X_train_dif, y_train_dif)
-y_pred_dif = knn_dif.predict(X_test_dif)
+mayordif = []
+for i in range(3):
+    mayordif.append(str(atributo_elegido_dif[i]))
+    
+X_train_dif = X_train.loc[:,mayordif]
+X_test_dif = X_test.loc[:,mayordif]
 
-accuracy_dif = accuracy_score(y_test_dif, y_pred_dif)
-print(f'Exactitud con 3 los atributos según máxima diferencia absoluta entre pixeles: {accuracy_dif}')
+model_dif = KNeighborsClassifier(n_neighbors = 3) # mover los vecinos y ver cuantos 
+
+model_dif.fit(X_train_dif, y_train) # entreno el modelo con los datos X_train e Y_train
+
+y_pred_dif = model_dif.predict(X_test_dif) # me fijo qué clases les asigna el modelo a mis datos X_test
+
+accuracy_dif = metrics.accuracy_score(y_test, y_pred_dif)
+
+print("Exactitud con 3 los atributos según máxima diferencia absoluta entre pixeles:", accuracy_dif)
 
 
 #%% 3 atributos random
 # 50 conjuntos de 3 atributos random distintos
-sets_atributos = np.random.choice(range(1, 530), (50, 3), replace=False).tolist()
+column_names = X_train.columns.tolist()
+sets_atributos = [np.random.choice(column_names, 3, replace=False).tolist() for _ in range(50)]
 
-knn_rand = KNeighborsClassifier(n_neighbors=3)
+
 preds = []
 
 for attributes in sets_atributos:
-    knn_rand.fit(X_train[:, attributes], y_train)
-    y_pred_rand = knn_rand.predict(X_test[:, attributes])
-    accuracy_rand = accuracy_score(y_test, y_pred_rand)
+    attribute_names = [str(attr) for attr in attributes]
+    X_train_rand = X_train[attribute_names]
+    X_test_rand = X_test[attribute_names]
+    model_rand = KNeighborsClassifier(n_neighbors=3)
+    model_rand.fit(X_train_rand, y_train)
+    y_pred_rand = model_rand.predict(X_test_rand)
+    accuracy_rand = metrics.accuracy_score(y_test, y_pred_rand)
     preds.append((attributes, accuracy_rand))
 
 # Atributos con mejor exactitud
@@ -344,41 +372,37 @@ image_matrix = np.zeros((28, 28))
 
 # Asignar intensidad 256 a los píxeles correspondientes a los mejores atributos
 for atributo in best_attributes:
+    atributo_int = int(atributo)
     # Convertir el índice del atributo a su posición en la matriz 28x28
-    row = atributo // 28
-    col = atributo % 28
+    row = atributo_int // 28
+    col = atributo_int % 28
     image_matrix[row, col] = 256
 
 # Graficar la imagen
 plt.imshow(image_matrix, cmap='gray_r', vmin=0, vmax=256)
 
 
-'''X_train_mejor = X_train[:, best_attributes]
-X_test_mejor = X_test[:, best_attributes]
-
-knn_mejor = KNeighborsClassifier(n_neighbors=3)
-knn_mejor.fit(X_train_mejor, y_train)
-y_pred_mejor = knn_mejor.predict(X_test_mejor)
-
-accuracy_mejor = accuracy_score(y_test, y_pred_mejor)
-print(f'Exactitud con 3 los atributos random con mejor exactitud: {accuracy_mejor}')'''
-
-
 #%% Entrenar con diferentes cantidades de atributos
-sets_atributos = np.random.choice(range(1, 530), (50, 3), replace=False).tolist()
-sets_atributos += np.random.choice(range(1, 531), (50, 5), replace=False).tolist()
-sets_atributos += np.random.choice(range(1, 531), (50, 7), replace=False).tolist()
-sets_atributos += np.random.choice(range(1, 531), (50, 9), replace=False).tolist()
-sets_atributos += np.random.choice(range(1, 531), (50, 11), replace=True).tolist()
+sets_atributos =  [np.random.choice(column_names, 3, replace=False).tolist() for _ in range(50)]
+sets_atributos +=  [np.random.choice(column_names, 5, replace=False).tolist() for _ in range(50)]
+sets_atributos +=  [np.random.choice(column_names, 7, replace=False).tolist() for _ in range(50)]
+sets_atributos +=  [np.random.choice(column_names, 9, replace=False).tolist() for _ in range(50)]
+sets_atributos +=  [np.random.choice(column_names, 11, replace=False).tolist() for _ in range(50)]
+sets_atributos +=  [np.random.choice(column_names, 13, replace=False).tolist() for _ in range(50)]
 
-knn_atributos = KNeighborsClassifier(n_neighbors=3)
+
 preds = []
 
 for attributes in sets_atributos:
-    knn_atributos.fit(X_train[:, attributes], y_train)
-    y_pred = knn_atributos.predict(X_test[:, attributes])
-    accuracy = accuracy_score(y_test, y_pred)
-    preds.append((attributes, accuracy))
+    attribute_names = [str(attr) for attr in attributes]
+    X_train_rand = X_train[attribute_names]
+    X_test_rand = X_test[attribute_names]
+    model_rand = KNeighborsClassifier(n_neighbors=3)
+    model_rand.fit(X_train_rand, y_train)
+    y_pred_rand = model_rand.predict(X_test_rand)
+    accuracy_rand = metrics.accuracy_score(y_test, y_pred_rand)
+    preds.append((attributes, accuracy_rand))
+
 
 # Atributos con mejor exactitud
 best_attributes = max(preds, key=lambda x: x[1])[0]
@@ -424,6 +448,13 @@ plt.show()
     
 
 #%% Variacion de cantidad de atributos y de vecinos
+sets_atributos =  [np.random.choice(column_names, 3, replace=False).tolist() for _ in range(50)]
+sets_atributos +=  [np.random.choice(column_names, 5, replace=False).tolist() for _ in range(50)]
+sets_atributos +=  [np.random.choice(column_names, 7, replace=False).tolist() for _ in range(50)]
+sets_atributos +=  [np.random.choice(column_names, 9, replace=False).tolist() for _ in range(50)]
+sets_atributos +=  [np.random.choice(column_names, 11, replace=False).tolist() for _ in range(50)]
+sets_atributos +=  [np.random.choice(column_names, 13, replace=False).tolist() for _ in range(50)]
+
 k_values = [1, 3, 5, 10, 20, 50]
 best_accuracy = 0
 best_k = 0
@@ -433,20 +464,23 @@ results = []
 
 for k in k_values:
     for attributes in sets_atributos:
-        knn = KNeighborsClassifier(n_neighbors=k)
-        knn.fit(X_train[:, attributes], y_train)
-        y_pred = knn.predict(X_test[:, attributes])
-        accuracy = accuracy_score(y_test, y_pred)
-
-        results.append((k, attributes, accuracy))
+        attribute_names = [str(attr) for attr in attributes]
+        X_train_variado = X_train[attribute_names]
+        X_test_variado = X_test[attribute_names]
+        model_variado = KNeighborsClassifier(n_neighbors=k)
+        model_variado.fit(X_train_variado, y_train)
+        y_pred_variado = model_variado.predict(X_test_variado)
+        accuracy_variado = metrics.accuracy_score(y_test, y_pred_variado)
         
-        if accuracy > best_accuracy:
-            best_accuracy = accuracy
+        results.append((k, attributes, accuracy_variado))
+        
+        if accuracy_variado > best_accuracy:
+            best_accuracy = accuracy_variado
             best_k = k
             best_attributes = attributes
-            precision = np.mean(y_pred == y_test)
+            precision = np.mean(y_pred_variado == y_test)
             # Matriz de confusión
-            cm = confusion_matrix(y_test, y_pred)
+            cm = confusion_matrix(y_test, y_pred_variado)
 
 print(f'Mejor modelo - k: {best_k}, Atributos: {best_attributes}, Exactitud: {best_accuracy}')
 print(f'Precisión: {precision}')
@@ -468,6 +502,8 @@ for k, attributes_accuracies in accuracy_by_k.items():
 for k_attributes, avg_accuracy in average_accuracy_by_k_attributes.items():
     print(f'{k_attributes}: {avg_accuracy}')    
     
+
+
 # Graficamos
 # Extraer los valores de k, cantidad de atributos y exactitud promedio
 k_values = [int(key.split(',')[0]) for key in average_accuracy_by_k_attributes.keys()]
@@ -482,4 +518,233 @@ plt.ylabel('Exactitud promedio')
 cbar = plt.colorbar(scatter)
 cbar.set_label('Cantidad de Atributos')
 plt.show()
+
+
+# Agrupamos los resultados por k y cantidad de atributos
+accuracy_by_k = defaultdict(lambda: defaultdict(list))
+
+for k, attributes, accuracy in results:
+    accuracy_by_k[k][len(attributes)].append(accuracy)
+
+# Calculamos la exactitud promedio por cantidad de atributos y k
+average_accuracy_by_k = defaultdict(dict)
+for k, attribute_accuracies in accuracy_by_k.items():
+    for num_attributes, accuracies in attribute_accuracies.items():
+        average_accuracy_by_k[k][num_attributes] = np.mean(accuracies)
+
+# Graficamos
+plt.figure(figsize=(8, 6))
+# Dibujamos una línea por cada cantidad de vecinos k
+for k, accuracies_by_attributes in average_accuracy_by_k.items():
+    num_attributes = sorted(accuracies_by_attributes.keys())  # Asegurarse de que la cantidad de atributos esté ordenada
+    accuracies = [accuracies_by_attributes[num_attr] for num_attr in num_attributes]
+    plt.plot(num_attributes, accuracies, label=f'{k} vecinos', marker='o')
+plt.xlabel('Cantidad de atributos')
+plt.ylabel('Exactitud promedio')
+plt.legend()
+plt.grid()
+plt.show()
+
+#%% CLASIFICACION MULTICLASE
+# Separamos datos de desarrollo y validacion
+X = df.drop('labels', axis=1).values
+y = df['labels'].values
+
+X_dev, X_held_out, y_dev, y_held_out = train_test_split(X, y, test_size=0.2, random_state=42)
+
+#%% 
+# GINI
+# Inicializar KFold con 5 particiones
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+# Lista para almacenar la exactitud promedio para cada profundidad
+promedio_exactitud_por_profundidad = []
+
+# Probar con profundidades entre 1 y 10
+mejor_profundidad = 0
+mejor_exactitud = 0
+
+for profundidad in range(1, 11):
+    exactitudes = []
     
+    # Realizar validación cruzada K-Fold
+    for train_index, val_index in kf.split(X_dev):
+        X_train_fold, X_val_fold = X_dev[train_index], X_dev[val_index]
+        y_train_fold, y_val_fold = y_dev[train_index], y_dev[val_index]
+        
+        # Entrenar el clasificador de árbol de decisión
+        dt = DecisionTreeClassifier(max_depth=profundidad, random_state=42, criterion='gini')
+        dt.fit(X_train_fold, y_train_fold)
+        
+        # Predecir en el conjunto de validación
+        y_pred_fold = dt.predict(X_val_fold)
+        
+        # Calcular la exactitud
+        exactitud_fold = metrics.accuracy_score(y_val_fold, y_pred_fold)
+        exactitudes.append(exactitud_fold)
+    
+    # Calcular la exactitud promedio para la profundidad actual
+    promedio_exactitud = np.mean(exactitudes)
+    promedio_exactitud_por_profundidad.append(promedio_exactitud)
+    
+    # Guardar la mejor profundidad y su exactitud
+    if promedio_exactitud > mejor_exactitud:
+        mejor_exactitud = promedio_exactitud
+        mejor_profundidad = profundidad
+
+print(f'GINI. Mejor profundidad: {mejor_profundidad}, Mejor exactitud promedio: {mejor_exactitud}')
+
+# ENTROPY
+# Inicializar KFold con 5 particiones
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+# Lista para almacenar la exactitud promedio para cada profundidad
+promedio_exactitud_por_profundidad = []
+#también guardamos la predicción para train
+promedio_exactitud_por_profundidad_train = []
+
+# Probar con profundidades entre 1 y 10
+mejor_profundidad = 0
+mejor_exactitud = 0
+
+for profundidad in range(1, 11):
+    exactitudes = []
+    exactitudes_train = []
+    
+    # Realizar validación cruzada K-Fold
+    for train_index, val_index in kf.split(X_dev):
+        X_train_fold, X_val_fold = X_dev[train_index], X_dev[val_index]
+        y_train_fold, y_val_fold = y_dev[train_index], y_dev[val_index]
+        
+        # Entrenar el clasificador de árbol de decisión
+        dt = DecisionTreeClassifier(max_depth=profundidad, random_state=42, criterion='entropy')
+        dt.fit(X_train_fold, y_train_fold)
+        
+        # Predecir en el conjunto de validación
+        y_pred_fold = dt.predict(X_val_fold)
+        #predecir el conjunto de entrenamiento
+        y_pred_train = dt.predict(X_train_fold)
+        
+        # Calcular la exactitud
+        exactitud_fold = metrics.accuracy_score(y_val_fold, y_pred_fold)
+        exactitudes.append(exactitud_fold)
+        #exactitud en el conjunto de entrenamiento
+        exactitud_train = metrics.accuracy_score(y_train_fold, y_pred_train)
+        exactitudes_train.append(exactitud_train)
+
+    
+    # Calcular la exactitud promedio para la profundidad actual
+    promedio_exactitud = np.mean(exactitudes)
+    promedio_exactitud_por_profundidad.append(promedio_exactitud)
+    promedio_exactitud_train = np.mean(exactitudes_train)
+    promedio_exactitud_por_profundidad_train.append(promedio_exactitud_train)
+    
+    # Guardar la mejor profundidad y su exactitud
+    if promedio_exactitud > mejor_exactitud:
+        mejor_exactitud = promedio_exactitud
+        mejor_profundidad = profundidad
+
+print(f'ENTROPY. Mejor profundidad: {mejor_profundidad}, Mejor exactitud promedio: {mejor_exactitud}')
+
+
+#%% Graficamos diferencia de exactitud para ambos modelos al variar la profundidad del arbol
+plt.figure(figsize=(10, 6))
+
+# Graficar la exactitud promedio para Gini
+plt.plot(range(1, 11), promedio_exactitud_por_profundidad, label='GINI', color='blue', marker='o')
+
+# Graficar la exactitud promedio para Entropy
+plt.plot(range(1, 11), promedio_exactitud_por_profundidad_train, label='ENTROPY', color='orange', marker='o')
+
+# Etiquetas y título
+plt.xlabel('Profundidad del Árbol', fontsize=12)
+plt.ylabel('Exactitud Promedio', fontsize=12)
+
+plt.legend()
+plt.grid()
+plt.show()
+
+
+#%% Graficamos para observar overfitting
+for profundidad in range(11, 16):
+    exactitudes = []
+    exactitudes_train = []
+    
+    # Realizar validación cruzada K-Fold
+    for train_index, val_index in kf.split(X_dev):
+        X_train_fold, X_val_fold = X_dev[train_index], X_dev[val_index]
+        y_train_fold, y_val_fold = y_dev[train_index], y_dev[val_index]
+        
+        # Entrenar el clasificador de árbol de decisión
+        dt = DecisionTreeClassifier(max_depth=profundidad, random_state=42, criterion='entropy')
+        dt.fit(X_train_fold, y_train_fold)
+        
+        # Predecir en el conjunto de validación
+        y_pred_fold = dt.predict(X_val_fold)
+        #predecir el conjunto de entrenamiento
+        y_pred_train = dt.predict(X_train_fold)
+        
+        # Calcular la exactitud
+        exactitud_fold = metrics.accuracy_score(y_val_fold, y_pred_fold)
+        exactitudes.append(exactitud_fold)
+        #exactitud en el conjunto de entrenamiento
+        exactitud_train = metrics.accuracy_score(y_train_fold, y_pred_train)
+        exactitudes_train.append(exactitud_train)
+
+    
+    # Calcular la exactitud promedio para la profundidad actual
+    promedio_exactitud = np.mean(exactitudes)
+    promedio_exactitud_por_profundidad.append(promedio_exactitud)
+    promedio_exactitud_train = np.mean(exactitudes_train)
+    promedio_exactitud_por_profundidad_train.append(promedio_exactitud_train)
+    
+    # Guardar la mejor profundidad y su exactitud
+    if promedio_exactitud > mejor_exactitud:
+        mejor_exactitud = promedio_exactitud
+        mejor_profundidad = profundidad
+
+
+print(f'ENTROPY. Mejor profundidad: {mejor_profundidad}, Mejor exactitud promedio: {mejor_exactitud}')
+
+
+plt.plot(range(1, len(promedio_exactitud_por_profundidad_train) + 1), promedio_exactitud_por_profundidad_train, label='Entrenamiento', marker='o')
+plt.plot(range(1, len(promedio_exactitud_por_profundidad) + 1), promedio_exactitud_por_profundidad, label='Validación', marker='o')
+plt.xlabel('Profundidad')
+plt.ylabel('Exactitud promedio')
+plt.legend()
+plt.show()
+
+
+#%% Entrenamos el modelo con profundidad 10 y criterio entropy con todo el conjunto de desarrollo 
+# Entrenar el modelo con el conjunto de desarrollo
+dt = DecisionTreeClassifier(max_depth=10, random_state=42, criterion='entropy')
+dt.fit(X_dev, y_dev)
+
+# Predecir en el conjunto de validación
+y_pred_held_out = dt.predict(X_held_out)
+
+# Exactitud
+exactitud_held_out = metrics.accuracy_score(y_held_out, y_pred_held_out)
+print(f'Exactitud en el conjunto de validación: {exactitud_held_out}')
+
+# Matriz de confusión
+cm = confusion_matrix(y_held_out, y_pred_held_out)
+
+# para cada clase, calculamos la precisión y el recall
+# precisión = TP / (TP + FP)
+# recall = TP / (TP + FN)
+precision = np.diag(cm) / np.sum(cm, axis=0)
+recall = np.diag(cm) / np.sum(cm, axis=1)
+
+# imprimimos la precisión y el recall para cada clase
+for i in range(10):
+    print(f'Clase {i}: Precisión: {precision[i]}, Recall: {recall[i]}')
+
+
+#%% Graficamos la matriz de confusion en un heatmap
+
+plt.imshow(cm, cmap='hot', interpolation='nearest')
+plt.colorbar()
+plt.xlabel('Predicciones')
+plt.ylabel('Valores reales')
+plt.show()
