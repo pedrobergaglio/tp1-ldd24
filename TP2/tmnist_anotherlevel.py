@@ -1,13 +1,13 @@
 # Grupo: Another Level.
+
 # Participantes: Pedro Bergaglio, Tomas Da Silva Minas y Maria Delfina Kiss. 
-# Contenido: 
+
+# Contenido: En el presente archivo se resuelven los ejercicios correspondientes al trabajo practico 2 de la materia laboratorio de datos y se realizar los graficos y figuras necesarias para el informe de dicho.
     
 #%% Importaciones
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
-from inline_sql import sql
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from collections import defaultdict
@@ -16,6 +16,8 @@ from sklearn import metrics
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import KFold
 
+
+
 #%% Carga de Datos 
 # Leemos el archivo csv en un dataframe
 df = pd.read_csv('TMNIST_Data.csv')
@@ -23,8 +25,9 @@ df = pd.read_csv('TMNIST_Data.csv')
 # Sacamos el atributo 'names'
 df = df.drop('names', axis=1)
 
-#%% Funciones
 
+
+#%% Funciones
 def imagen(df, digito):
     # Filtrar el DataFrame para obtener solo las filas que corresponden al dígito especificado
     imagenes_digito = df[df['labels'] == digito]
@@ -69,6 +72,7 @@ print('cantidad de digitos: ', df['labels'].value_counts())
 print(df.describe())
 
 
+
 #%% Sacar pixeles que suman cero
 
 df_completo = df.copy()
@@ -99,8 +103,12 @@ df = df[['labels'] + [col for col in df.columns if col != 'labels']]
 
 df.head()
 
+
+
 #%% Heatmap de presencia de pixeles
 mapacalornumeros(df_completo)
+
+
 
 #%% Valor absoluto diferencia pixeles
 # Calculamos los valores promedio de los píxeles para cada etiqueta
@@ -157,11 +165,14 @@ print('\nTop 5 pares de labels con menor diferencia promedio:')
 for label1, label2, diff in bottom_5_differences:
     print(f'Labels {label1} y {label2}: {diff}')
     
+    
 
 #%% Imagenes digitos 1, 3 y 8 
 imagen(df_completo, 1)
 imagen(df_completo, 3)
 imagen(df_completo, 8)
+
+
 
 #%% Mapa de calor digito 1 con 3 y 3 con 8
 # Nos quedamos con los digitos 1 y 3
@@ -173,6 +184,7 @@ mapacalornumeros(df_1_3)
 df_3_8 = df_completo[(df_completo['labels'] == 3) | (df_completo['labels'] == 8)]
 
 mapacalornumeros(df_3_8)
+
 
 
 #%% Diferencia absoluta digiros 1 con 3 y 3 con 8 
@@ -204,6 +216,7 @@ plt.imshow(data_3_8, cmap='gray_r')  # Use 'gray_r' to invert the colors
 plt.show()
 
 
+
 #%% Digito 0 
 for i in range(1, 5, 1):
     imagen(df_completo, 0)
@@ -213,6 +226,7 @@ for i in range(1, 5, 1):
 df_0 = df_completo[(df_completo['labels'] == 0)]
 
 mapacalornumeros(df_0)
+
 
 
 #%% CLASIFICACION BINARIA
@@ -227,10 +241,12 @@ print(f'Cantidad de muestras del dígito 0: {count_0}')
 print(f'Cantidad de muestras del dígito 1: {count_1}')
 
 
+
 #%% Separamos los datos en conjuntos de train y de test
 X_0_1 = df_0_1.drop('labels', axis=1)
 y_0_1 = df_0_1['labels'].values
 X_train, X_test, y_train, y_test = train_test_split(X_0_1, y_0_1, test_size=0.2, random_state=42)
+
 
 
 #%% 3 atributos a mano
@@ -306,7 +322,6 @@ diff_sorted = diff.sort_values(ascending=False)
 atributo_elegido_dif = diff_sorted.index[:3].values
 
 
-
 # Crear una matriz de 28x28 inicializada en cero
 image_matrix = np.zeros((28, 28))
 
@@ -319,7 +334,6 @@ for atributo in atributo_elegido_dif:
 
 # Graficar la imagen
 plt.imshow(image_matrix, cmap='gray_r', vmin=0, vmax=256)
-
 
 
 X_train = pd.DataFrame(X_train)
@@ -341,6 +355,7 @@ y_pred_dif = model_dif.predict(X_test_dif) # me fijo qué clases les asigna el m
 accuracy_dif = metrics.accuracy_score(y_test, y_pred_dif)
 
 print("Exactitud con 3 los atributos según máxima diferencia absoluta entre pixeles:", accuracy_dif)
+
 
 
 #%% 3 atributos random
@@ -380,6 +395,7 @@ for atributo in best_attributes:
 
 # Graficar la imagen
 plt.imshow(image_matrix, cmap='gray_r', vmin=0, vmax=256)
+
 
 
 #%% Entrenar con diferentes cantidades de atributos
@@ -422,6 +438,8 @@ average_accuracy_by_num_attributes = {num_attributes: np.mean(accuracies) for nu
 for num_attributes, avg_accuracy in average_accuracy_by_num_attributes.items():
     print(f'Cantidad de atributos: {num_attributes}, Exactitud promedio: {avg_accuracy}')
     
+    
+    
 #%% Grafico para mostrar variacion de la exactitud por cantidad de atributos
 # Extraer los datos para el gráfico
 num_attributes_list = sorted(average_accuracy_by_num_attributes.keys())
@@ -446,6 +464,7 @@ plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.legend()
 plt.show()
     
+
 
 #%% Variacion de cantidad de atributos y de vecinos
 sets_atributos =  [np.random.choice(column_names, 3, replace=False).tolist() for _ in range(50)]
@@ -485,6 +504,8 @@ for k in k_values:
 print(f'Mejor modelo - k: {best_k}, Atributos: {best_attributes}, Exactitud: {best_accuracy}')
 print(f'Precisión: {precision}')
 print(f'Matriz de confusión:\n{cm}')
+
+
 
 #%% Graficamos
 # Calcular la exactitud promedio para cada k
@@ -545,12 +566,16 @@ plt.legend()
 plt.grid()
 plt.show()
 
+
+
 #%% CLASIFICACION MULTICLASE
 # Separamos datos de desarrollo y validacion
 X = df.drop('labels', axis=1).values
 y = df['labels'].values
 
 X_dev, X_held_out, y_dev, y_held_out = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
 
 #%% 
 # GINI
@@ -647,6 +672,7 @@ for profundidad in range(1, 11):
 print(f'ENTROPY. Mejor profundidad: {mejor_profundidad}, Mejor exactitud promedio: {mejor_exactitud}')
 
 
+
 #%% Graficamos diferencia de exactitud para ambos modelos al variar la profundidad del arbol
 plt.figure(figsize=(10, 6))
 
@@ -663,6 +689,7 @@ plt.ylabel('Exactitud Promedio', fontsize=12)
 plt.legend()
 plt.grid()
 plt.show()
+
 
 
 #%% Graficamos para observar overfitting
@@ -715,6 +742,7 @@ plt.legend()
 plt.show()
 
 
+
 #%% Entrenamos el modelo con profundidad 10 y criterio entropy con todo el conjunto de desarrollo 
 # Entrenar el modelo con el conjunto de desarrollo
 dt = DecisionTreeClassifier(max_depth=10, random_state=42, criterion='entropy')
@@ -730,7 +758,7 @@ print(f'Exactitud en el conjunto de validación: {exactitud_held_out}')
 # Matriz de confusión
 cm = confusion_matrix(y_held_out, y_pred_held_out)
 
-# para cada clase, calculamos la precisión y el recall
+# para cada digito, calculamos la precisión y el recall
 # precisión = TP / (TP + FP)
 # recall = TP / (TP + FN)
 precision = np.diag(cm) / np.sum(cm, axis=0)
@@ -738,7 +766,8 @@ recall = np.diag(cm) / np.sum(cm, axis=1)
 
 # imprimimos la precisión y el recall para cada clase
 for i in range(10):
-    print(f'Clase {i}: Precisión: {precision[i]}, Recall: {recall[i]}')
+    print(f'Digito {i}: Precisión: {precision[i]}, Recall: {recall[i]}')
+
 
 
 #%% Graficamos la matriz de confusion en un heatmap
