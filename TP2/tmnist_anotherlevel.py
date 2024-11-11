@@ -56,7 +56,6 @@ def mapacalornumeros(df):
     # Graficamos el mapa de calor
     plt.imshow(heatmap_data, cmap='hot', interpolation='nearest')
     plt.colorbar()
-    plt.savefig("figura1.png", dpi=300, bbox_inches='tight')
     plt.show()
 
 
